@@ -5,23 +5,17 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
 
-# Read the initial DataFrame
+# Load the Excel file
 df = pd.read_excel(r'C:\\Users\\Tanish Singhal\\Desktop\\AKTU result Mini Project.xlsx')
 
-# Initialize the webdriver
 driver = webdriver.Chrome()
 initial_url = 'https://erp.aktu.ac.in/webpages/oneview/oneview.aspx'
 driver.get(initial_url)
 
 wait = WebDriverWait(driver, 5)
 
-# Iterate through the DataFrame
 for index, row in df.iterrows():
-    # Create lists to store data from the third and sixth td tags for each student
-    data_third_td = []
-    data_sixth_td = []
-
-    # Roll No part
+    # TODO: Roll No part
     roll_number_input = wait.until(EC.presence_of_element_located((By.ID, 'txtRollNo')))
     roll_number_input.clear()
     roll_number_input.send_keys(str(row['rollno']))
@@ -29,19 +23,19 @@ for index, row in df.iterrows():
     submit_button = wait.until(EC.element_to_be_clickable((By.ID, 'btnProceed')))
     submit_button.click()
 
-    # Date of Birth Part
+    # TODO: Date of Birth Part
     dob_input = wait.until(EC.presence_of_element_located((By.ID, 'txtDOB')))
     formatted_dob = row['dob'].strftime('%Y-%m-%d')
     dob_input.clear()
     dob_input.send_keys(formatted_dob)
 
-    # Captcha Manually Solve
+    # TODO: Captcha Manually Solve
     captcha_input = input("Please solve the captcha manually and press Enter when done: ")
 
     submit_button = wait.until(EC.element_to_be_clickable((By.ID, 'btnSearch')))
     submit_button.click()
 
-    # Second page start
+    # FIXME: Second page start
     # Move to the targeted div
     second_page_elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, '//tbody/tr[2]/td/div')))
     
@@ -52,42 +46,38 @@ for index, row in df.iterrows():
     # Click on the last div
     last_div = second_page_elements[-1]
     last_div.click()
-    
-    # Wait for the new div to appear (you may need to adjust the XPath)
-    new_div_xpath = '//div/div[@class="container-fluid"]/div[@class="row"]/div[@class="col-md-6"][last()]'
-    new_last_div = wait.until(EC.presence_of_element_located((By.XPATH, new_div_xpath)))
 
-    # Locate the table inside the last div
-    table_xpath = '//div[@class="col-md-6"][last()]//table'
-    table = new_last_div.find_element(By.XPATH, table_xpath)
+    # Extract and update the specific data
+    label_to_column = {
+        'Semester': 'semester',
+        'Even/Odd': 'even_odd',
+        'Total Subjects': 'totalSubjects',
+        'Theory Subjects': 'theorySubjects',
+        'Practical Subjects': 'practicalSubjects',
+        'Total Marks Obt.': 'totalMarks',
+        'Result Status': 'resultStatus',
+        'SGPA': 'sgpa',
+        'Date of Declaration': 'declarationDate'
+    }
 
-    # Find all rows in the table
-    rows = table.find_elements(By.TAG_NAME, 'tr')
+    for inner_row in last_div.find_elements(By.TAG_NAME, 'tr'):
+        cells = inner_row.find_elements(By.TAG_NAME, 'td')
 
-    # Iterate over the first 6 rows
-    for row in rows[:6]:
-        # Find all columns in the row
-        columns = row.find_elements(By.TAG_NAME, 'td')
-        
-        # Extract and store data from the third and sixth td tags
-        for i, column in enumerate(columns):
-            if i in [2]:  # Index 2 for the third td tag
-                data_third_td.append(column.text)
-            elif i in [5]:  # Index 5 for the sixth td tag
-                data_sixth_td.append(column.text)
+        # Check if the row has at least 2 cells (label and value)
+        if len(cells) >= 2:
+            label = cells[0].text.strip()
+            value = cells[-1].text.strip()
 
-     # Check the lengths of the lists
-    print(len(data_third_td))  # Should be 6
-    print(len(data_sixth_td))  # Should be 6
+            # Map label to corresponding column name in the Excel file
+            column_name = label_to_column.get(label)
 
-    # Add the lists to your DataFrame if lengths match
-    if len(data_third_td) == len(data_sixth_td):
-        df.loc[index, 'data_third_td'] = data_third_td
-        df.loc[index, 'data_sixth_td'] = data_sixth_td
-    else:
-        print(f"Lengths of data_third_td and data_sixth_td do not match for Roll No {row['rollno']}")
+            # If the label is in the mapping, update the DataFrame with the extracted value
+            if column_name:
+                df.loc[index, column_name] = value
+        else:
+            print(f"Skipping row: {inner_row.text}")
 
-    # Save the updated data to the Excel file
+    # Save the data in the Excel file
     df.to_excel(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', index=False)
 
     # Run the main URL again, to fetch the data of the next student
