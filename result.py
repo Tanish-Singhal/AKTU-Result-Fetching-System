@@ -60,8 +60,8 @@ for index, row in df.iterrows():
         'Date of Declaration': 'declarationDate'
     }
 
-    for inner_row in last_div.find_elements(By.TAG_NAME, 'tr'):
-        cells = inner_row.find_elements(By.TAG_NAME, 'td')
+    for row in last_div.find_elements(By.TAG_NAME, 'tr'):
+        cells = row.find_elements(By.TAG_NAME, 'td')
 
         # Check if the row has at least 2 cells (label and value)
         if len(cells) >= 2:
@@ -73,9 +73,13 @@ for index, row in df.iterrows():
 
             # If the label is in the mapping, update the DataFrame with the extracted value
             if column_name:
-                df.loc[index, column_name] = value
+                # Explicitly cast the value to float if needed
+                if column_name in ['totalMarks', 'sgpa']:
+                    df.loc[index, column_name] = float(value)
+                else:
+                    df.loc[index, column_name] = value
         else:
-            print(f"Skipping row: {inner_row.text}")
+            print(f"Skipping row: {row.text}")
 
     # Save the data in the Excel file
     df.to_excel(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', index=False)
