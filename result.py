@@ -81,6 +81,26 @@ for index, row in df.iterrows():
         else:
             print(f"Skipping row: {row.text}")
 
+    # Assuming 'extracted_data' contains the data from the table
+    # ...
+
+    # Define the column headers based on the table header
+    headers = ["Code", "Name", "Type", "Internal", "External", "Back Paper", "Grade"]
+
+    # Create a DataFrame from the extracted data
+    df_table = pd.DataFrame(extracted_data, columns=headers)
+
+    # Print the DataFrame (optional)
+    print(df_table)
+
+    # Save the DataFrame to an Excel file
+    with pd.ExcelWriter(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', engine='openpyxl', mode='a') as writer:
+        df_table.to_excel(writer, index=False)
+
+    # Assuming you have a column in your main DataFrame to identify each row (e.g., 'rollno')
+    # You may need to modify this based on your actual column names
+    df.loc[index, 'TableData'] = df_table.to_string(index=False)
+
     # Save the data in the Excel file
     df.to_excel(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', index=False)
 
