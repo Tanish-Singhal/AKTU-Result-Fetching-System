@@ -90,6 +90,44 @@ for index, row in df.iterrows():
             if additional_label is not None and additional_value is not None:
                 df.loc[index, additional_label] = additional_value
 
+    # Extract subject marks from the table
+    subject_marks_table = wait.until(EC.presence_of_element_located((By.ID, 'ctl06_ctl01_ctl00_grdViewSubjectMarksheet')))
+    subject_rows = subject_marks_table.find_elements(By.XPATH, './/tr[position()>1]')  # Skip the header row
+
+    # Create lists to store subject details
+    subject_codes = []
+    subject_names = []
+    subject_types = []
+    internal_marks = []
+    external_marks = []
+    back_paper_marks = []
+    grades = []
+
+    # Extract subject details and append to lists
+    for subject_row in subject_rows:
+        subject_cells = subject_row.find_elements(By.XPATH, './/td')
+        if len(subject_cells) == 7:
+            subject_codes.append(subject_cells[0].text.strip())
+            subject_names.append(subject_cells[1].text.strip())
+            subject_types.append(subject_cells[2].text.strip())
+            internal_marks.append(subject_cells[3].text.strip())
+            external_marks.append(subject_cells[4].text.strip())
+            back_paper_marks.append(subject_cells[5].text.strip())
+            grades.append(subject_cells[6].text.strip())
+
+    # Create a DataFrame for subject details
+    subject_df = pd.DataFrame({
+        'SubjectCode': subject_codes,
+        'SubjectName': subject_names,
+        'SubjectType': subject_types,
+        'InternalMarks': internal_marks,
+        'ExternalMarks': external_marks,
+        'BackPaperMarks': back_paper_marks,
+        'Grades': grades
+    })
+
+    # Merge subject details DataFrame with the main DataFrame on the index
+    df = pd.concat([df, subject_df], axis=1)
 
     # Save the data in the Excel file
     df.to_excel(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', index=False)
