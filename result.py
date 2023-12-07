@@ -47,59 +47,49 @@ for index, row in df.iterrows():
     last_div = second_page_elements[-1]
     last_div.click()
 
-    # Extract and update the specific data
-    label_to_column = {
-        'Semester': 'semester',
-        'Even/Odd': 'even_odd',
-        'Total Subjects': 'totalSubjects',
-        'Theory Subjects': 'theorySubjects',
-        'Practical Subjects': 'practicalSubjects',
-        'Total Marks Obt.': 'totalMarks',
-        'Result Status': 'resultStatus',
-        'SGPA': 'sgpa',
-        'Date of Declaration': 'declarationDate'
-    }
+    # Extract data from the div with class "col-md-6"
+    semester_info_div = wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="col-md-6"]')))
+    table_rows = semester_info_div.find_elements(By.XPATH, '//table//tr')
 
-    for row in last_div.find_elements(By.TAG_NAME, 'tr'):
-        cells = row.find_elements(By.TAG_NAME, 'td')
+    # Extract and update data in the DataFrame
+    for row in table_rows:
+        cells = row.find_elements(By.XPATH, './/td')
+        if len(cells) <= 6:  # Assuming each row has 6 cells as per the provided HTML structure
+            try:
+                label_element = cells[0].find_element(By.XPATH, './/span')
+                label = label_element.text.strip() if label_element else None
+            except Exception as e:
+                print(f"Error extracting label: {e}")
+                continue
 
-        # Check if the row has at least 2 cells (label and value)
-        if len(cells) >= 2:
-            label = cells[0].text.strip()
-            value = cells[-1].text.strip()
+            try:
+                value_element = cells[2].find_element(By.XPATH, './/span')
+                value = value_element.text.strip() if value_element else None
+            except Exception as e:
+                print(f"Error extracting value: {e}")
+                continue
 
-            # Map label to corresponding column name in the Excel file
-            column_name = label_to_column.get(label)
+            # Additional data extraction
+            try:
+                additional_label_element = cells[3].find_element(By.XPATH, './/span')  # Update the index to 3
+                additional_label = additional_label_element.text.strip() if additional_label_element else None
+            except Exception as e:
+                print(f"Error extracting additional label: {e}")
+                additional_label = None
 
-            # If the label is in the mapping, update the DataFrame with the extracted value
-            if column_name:
-                # Explicitly cast the value to float if needed
-                if column_name in ['totalMarks', 'sgpa']:
-                    df.loc[index, column_name] = float(value)
-                else:
-                    df.loc[index, column_name] = value
-        else:
-            print(f"Skipping row: {row.text}")
+            try:
+                additional_value_element = cells[5].find_element(By.XPATH, './/span')
+                additional_value = additional_value_element.text.strip() if additional_value_element else None
+            except Exception as e:
+                print(f"Error extracting additional value: {e}")
+                additional_value = None
 
-    # Assuming 'extracted_data' contains the data from the table
-    # ...
+            if label is not None and value is not None:
+                df.loc[index, label] = value
 
-    # Define the column headers based on the table header
-    headers = ["Code", "Name", "Type", "Internal", "External", "Back Paper", "Grade"]
+            if additional_label is not None and additional_value is not None:
+                df.loc[index, additional_label] = additional_value
 
-    # Create a DataFrame from the extracted data
-    df_table = pd.DataFrame(extracted_data, columns=headers)
-
-    # Print the DataFrame (optional)
-    print(df_table)
-
-    # Save the DataFrame to an Excel file
-    with pd.ExcelWriter(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', engine='openpyxl', mode='a') as writer:
-        df_table.to_excel(writer, index=False)
-
-    # Assuming you have a column in your main DataFrame to identify each row (e.g., 'rollno')
-    # You may need to modify this based on your actual column names
-    df.loc[index, 'TableData'] = df_table.to_string(index=False)
 
     # Save the data in the Excel file
     df.to_excel(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', index=False)
