@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
 
-# Load the Excel file
+# TODO: Load the Excel file and the website
 df = pd.read_excel(r'C:\\Users\\Tanish Singhal\\Desktop\\AKTU result Mini Project.xlsx')
 
 driver = webdriver.Chrome()
@@ -36,25 +36,22 @@ for index, row in df.iterrows():
     submit_button.click()
 
     # FIXME: Second page start
-    # Move to the targeted div
+    # TODO: Main div data extracted
     second_page_elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, '//tbody/tr[2]/td/div')))
     
-    # Extract the data from the last div and update it
     last_div_data = second_page_elements[-1].text
     df.loc[index, 'overallResult'] = last_div_data
 
-    # Click on the last div
     last_div = second_page_elements[-1]
     last_div.click()
 
-    # Extract data from the div with class "col-md-6"
+    # TODO: Small Table part
     semester_info_div = wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="col-md-6"]')))
     table_rows = semester_info_div.find_elements(By.XPATH, '//table//tr')
 
-    # Extract and update data in the DataFrame
     for row in table_rows:
         cells = row.find_elements(By.XPATH, './/td')
-        if len(cells) <= 6:  # Assuming each row has 6 cells as per the provided HTML structure
+        if len(cells) <= 6:  
             try:
                 label_element = cells[0].find_element(By.XPATH, './/span')
                 label = label_element.text.strip() if label_element else None
@@ -69,9 +66,8 @@ for index, row in df.iterrows():
                 print(f"Error extracting value: {e}")
                 continue
 
-            # Additional data extraction
             try:
-                additional_label_element = cells[3].find_element(By.XPATH, './/span')  # Update the index to 3
+                additional_label_element = cells[3].find_element(By.XPATH, './/span')
                 additional_label = additional_label_element.text.strip() if additional_label_element else None
             except Exception as e:
                 print(f"Error extracting additional label: {e}")
@@ -90,11 +86,10 @@ for index, row in df.iterrows():
             if additional_label is not None and additional_value is not None:
                 df.loc[index, additional_label] = additional_value
 
-    # Extract subject marks from the table
+    # TODO: Subject wise marks Table part
     subject_marks_table = wait.until(EC.presence_of_element_located((By.ID, 'ctl06_ctl01_ctl00_grdViewSubjectMarksheet')))
     subject_rows = subject_marks_table.find_elements(By.XPATH, './/tr[position()>1]')  # Skip the header row
 
-    # Create lists to store subject details
     subject_codes = []
     subject_names = []
     subject_types = []
@@ -103,7 +98,6 @@ for index, row in df.iterrows():
     back_paper_marks = []
     grades = []
 
-    # Extract subject details and append to lists
     for subject_row in subject_rows:
         subject_cells = subject_row.find_elements(By.XPATH, './/td')
         if len(subject_cells) == 7:
@@ -115,7 +109,6 @@ for index, row in df.iterrows():
             back_paper_marks.append(subject_cells[5].text.strip())
             grades.append(subject_cells[6].text.strip())
 
-    # Create a DataFrame for subject details
     subject_df = pd.DataFrame({
         'SubjectCode': subject_codes,
         'SubjectName': subject_names,
@@ -126,15 +119,12 @@ for index, row in df.iterrows():
         'Grades': grades
     })
 
-    # Merge subject details DataFrame with the main DataFrame on the index
     df = pd.concat([df, subject_df], axis=1)
 
-    # Save the data in the Excel file
+    # TODO: Save the data in the Excel file
     df.to_excel(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', index=False)
 
-    # Run the main URL again, to fetch the data of the next student
     driver.get(initial_url)
 
-# Close the browser with a delay to allow time for the Excel file to save
 time.sleep(5)
 driver.quit()
