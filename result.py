@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
+import random
 
 # TODO: Load the Excel file and the website
 df = pd.read_excel(r'C:\\Users\\Tanish Singhal\\Desktop\\AKTU result Mini Project.xlsx')
@@ -23,6 +24,9 @@ for index, row in df.iterrows():
     submit_button = wait.until(EC.element_to_be_clickable((By.ID, 'btnProceed')))
     submit_button.click()
 
+    random_delay = random.uniform(0, 5)
+    time.sleep(random_delay)
+
     # TODO: Date of Birth Part
     dob_input = wait.until(EC.presence_of_element_located((By.ID, 'txtDOB')))
     formatted_dob = row['dob'].strftime('%Y-%m-%d')
@@ -33,21 +37,24 @@ for index, row in df.iterrows():
     captcha_input = input("Please solve the captcha manually and press Enter when done: ")
 
     submit_button = wait.until(EC.element_to_be_clickable((By.ID, 'btnSearch')))
+
+    random_delay = random.uniform(0, 5)
+    time.sleep(random_delay)
+
     submit_button.click()
 
     # FIXME: Second page start
     # TODO: Main div data extracted
     second_page_elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, '//tbody/tr[2]/td/div')))
-    
-# 
 
     last_div_data = second_page_elements[-1].text
     df.loc[index, 'overallResult'] = last_div_data
-
     last_div = second_page_elements[-1]
-# 
+    
+    random_delay = random.uniform(0, 5)
+    time.sleep(random_delay)
+
     last_div.click()
-# 
 
     # TODO: Small Table part
     semester_info_div = wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="col-md-6"]')))
@@ -103,7 +110,7 @@ for index, row in df.iterrows():
     # Extract subject details and append to lists
     for subject_row in subject_rows:
         subject_cells = subject_row.find_elements(By.XPATH, './/td')
-        if len(subject_cells) == len(subject_row):
+        if len(subject_cells) == 7:
             subject_codes.append(subject_cells[0].text.strip())
             internal_marks.append(subject_cells[3].text.strip())
             external_marks.append(subject_cells[4].text.strip())
@@ -114,8 +121,6 @@ for index, row in df.iterrows():
         df.loc[index, f"{col_prefix}_Code"] = subject_codes[i]
         df.loc[index, f"{col_prefix}_Internal"] = internal_marks[i]
         df.loc[index, f"{col_prefix}_External"] = external_marks[i]
-
-# 
 
     # TODO: Save the data in the Excel file
     df.to_excel(r'C:\Users\Tanish Singhal\Desktop\AKTU result Mini Project.xlsx', index=False)
